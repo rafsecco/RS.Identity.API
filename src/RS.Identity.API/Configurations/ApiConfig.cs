@@ -1,21 +1,40 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using RS.Identity.API.Data;
+
 namespace RS.Identity.API.Configurations;
 
 public static class ApiConfig
 {
-	public static WebApplicationBuilder AddApiConfig(this WebApplicationBuilder builder)
+	public static WebApplicationBuilder AddApiConfiguration(this WebApplicationBuilder builder)
 	{
-		//builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
-		//	options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
-
 		builder.Services.AddControllers();
-		//.ConfigureApiBehaviorOptions(options =>
-		//{
-		//	options.SuppressModelStateInvalidFilter = true;
-		//});
+
+		string? strConn = builder.Configuration.GetConnectionString("DefaultConnection");
+
+		builder.Services.AddDbContext<RSIdentityDbContext>(options =>
+			options.UseSqlServer(strConn, e =>
+			{
+				e.EnableRetryOnFailure(
+					maxRetryCount: 3,
+					maxRetryDelay: TimeSpan.FromSeconds(6),
+					errorNumbersToAdd: null);
+			})
+			.LogTo(Console.WriteLine)
+			.EnableSensitiveDataLogging()
+			.EnableDetailedErrors());
+
+		builder.Services.AddDefaultIdentity<IdentityUser>(options =>
+			{
+				options.SignIn.RequireConfirmedAccount = true;
+			})
+			//.AddRoles<IdentityRole>()
+			.AddEntityFrameworkStores<RSIdentityDbContext>();
+
 		return builder;
 	}
 
-	public static WebApplication UseApiConfigure(this WebApplication app)
+	public static WebApplication UseApiConfiguration(this WebApplication app)
 	{
 		if (app.Environment.IsDevelopment())
 		{
