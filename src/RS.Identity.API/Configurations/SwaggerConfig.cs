@@ -9,7 +9,14 @@ public static class SwaggerConfig
 		builder.Services.AddEndpointsApiExplorer();
 		builder.Services.AddSwaggerGen(c =>
 		{
-			c.SwaggerDoc("v1", new OpenApiInfo { Title = "RS.Identity.API", Version = "v1" });
+			c.SwaggerDoc("v1", new OpenApiInfo
+			{
+				Title = "RS.Identity.API",
+				Version = "v1",
+				Description = "Api to manage user authentication and authorization",
+				Contact = new OpenApiContact() { Name = "Rafael Secco", Email = "rafaelsecco.dev@google.com" },
+				License = new OpenApiLicense() { Name = "MIT", Url = new Uri("https://opensource.org/license/MIT") }
+			});
 		});
 		return builder;
 	}
@@ -19,7 +26,7 @@ public static class SwaggerConfig
 		if (app.Environment.IsDevelopment())
 		{
 			app.UseSwagger();
-			app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "RS.Identity.API v1"));
+			app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "v1"));
 		}
 		return app;
 	}

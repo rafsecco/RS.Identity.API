@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RS.Identity.API.Data;
+using System.Reflection;
 
 namespace RS.Identity.API.Configurations;
 
@@ -8,6 +8,13 @@ public static class ApiConfig
 {
 	public static WebApplicationBuilder AddApiConfiguration(this WebApplicationBuilder builder)
 	{
+		builder.Configuration
+			.SetBasePath(builder.Environment.ContentRootPath)
+			.AddJsonFile("appsettings.json", true, true)
+			.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", true, true)
+			.AddEnvironmentVariables()
+			.AddUserSecrets(Assembly.GetExecutingAssembly(), true);
+
 		builder.Services.AddControllers();
 
 		string? strConn = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -24,13 +31,6 @@ public static class ApiConfig
 			.EnableSensitiveDataLogging()
 			.EnableDetailedErrors());
 
-		builder.Services.AddDefaultIdentity<IdentityUser>(options =>
-			{
-				options.SignIn.RequireConfirmedAccount = true;
-			})
-			//.AddRoles<IdentityRole>()
-			.AddEntityFrameworkStores<RSIdentityDbContext>();
-
 		return builder;
 	}
 
@@ -42,8 +42,8 @@ public static class ApiConfig
 		}
 
 		app.UseHttpsRedirection();
-		app.UseAuthentication();
-		app.UseAuthorization();
+		app.UseRouting();
+		app.UseIdentityConfiguration();
 		app.MapControllers();
 		return app;
 	}
