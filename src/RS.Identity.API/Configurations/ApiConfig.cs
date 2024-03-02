@@ -1,4 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using RS.Core.Security;
+using RS.Core.Security.AspNetCore;
+using RS.Core.Security.EntityFrameworkCore;
+using RS.Core.Security.Jwa;
 using RS.Identity.API.Data;
 using System.Reflection;
 
@@ -14,6 +18,11 @@ public static class ApiConfig
 			.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", true, true)
 			.AddEnvironmentVariables()
 			.AddUserSecrets(Assembly.GetExecutingAssembly(), true);
+
+		builder.Services
+			.AddJwksManager(options => options.Jws = Algorithm.Create(DigitalSignaturesAlgorithm.EcdsaSha256))
+			.PersistKeysToDatabaseStore<RSIdentityDbContext>()
+			.UseJwtValidation();
 
 		builder.Services.AddControllers();
 
@@ -45,6 +54,11 @@ public static class ApiConfig
 		app.UseRouting();
 		app.UseIdentityConfiguration();
 		app.MapControllers();
+
+		// Endpoint personalizado: localhost:porta/minha-chave
+		//app.UseJwksDiscovery("/minha-chave");
+		// Endpoint default: localhost:porta/jwks
+		app.UseJwksDiscovery(); //Responsavel pelo EndPoint da chave publica
 		return app;
 	}
 }
