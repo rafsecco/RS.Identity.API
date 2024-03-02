@@ -1,12 +1,11 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
+using RS.Core.Security.Interfaces;
 using RS.Identity.API.Extensions;
 using RS.Identity.API.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 
 namespace RS.Identity.API.Controllers;
 
@@ -17,16 +16,22 @@ public class IdentityController : MainController
 	private readonly SignInManager<IdentityUser> _signInManager;
 	private readonly UserManager<IdentityUser> _userManager;
 	private readonly AppSettings _appSettings;
+	private readonly IHttpContextAccessor _accessor;
+	private readonly IJwtService _jwksService;
 
 	public IdentityController(
 		SignInManager<IdentityUser> signInManager,
 		UserManager<IdentityUser> userManager,
-		IOptions<AppSettings> appSettings
+		IOptions<AppSettings> appSettings,
+		IHttpContextAccessor accessor,
+		IJwtService jwksService
 		)
 	{
 		_signInManager = signInManager;
 		_userManager = userManager;
 		_appSettings = appSettings.Value;
+		_accessor = accessor;
+		_jwksService = jwksService;
 	}
 
 	[HttpPost("new-user")]
@@ -83,11 +88,8 @@ public class IdentityController : MainController
 	{
 		var user = await _userManager.FindByEmailAsync(email);
 		var claims = await _userManager.GetClaimsAsync(user);
-
 		var identityClaims = await GetUserClaims(claims, user);
-
-		var encodedToken = CodedToken(identityClaims);
-
+		var encodedToken = await CodedToken(identityClaims);
 		return GetUserLoginResponse(encodedToken, user, claims);
 	}
 
@@ -116,18 +118,20 @@ public class IdentityController : MainController
 		return identityClaims;
 	}
 
-	private string CodedToken(ClaimsIdentity identityClaims)
+	private async Task<string> CodedToken(ClaimsIdentity identityClaims)
 	{
 		var tokenHandler = new JwtSecurityTokenHandler();
-		var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
+		var key = await _jwksService.GetCurrentSigningCredentials();
+
+		var currentIssuer = $"{_accessor.HttpContext.Request.Scheme}://{_accessor.HttpContext.Request.Host}";
 
 		var token = tokenHandler.CreateToken(new Microsoft.IdentityModel.Tokens.SecurityTokenDescriptor
 		{
-			Issuer = _appSettings.Issuer,
-			Audience = _appSettings.Audience,
+			Issuer = currentIssuer,
+			//Audience = _appSettings.Audience,
 			Subject = identityClaims,
 			Expires = DateTime.UtcNow.AddHours(_appSettings.ExpirationHours),
-			SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+			SigningCredentials = key
 		});
 
 		var encodedToken = tokenHandler.WriteToken(token);
