@@ -3,8 +3,8 @@ using RS.Identity.API.Configurations;
 var builder = WebApplication.CreateBuilder(args);
 
 builder
-	.AddApiConfiguration()
 	.AddIdentityConfiguration()
+	.AddApiConfiguration()
 	.AddSwaggerConfiguration();
 
 var app = builder.Build();

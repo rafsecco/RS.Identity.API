@@ -227,7 +227,7 @@ namespace RS.Identity.API.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("RS.Core.Security.Model.KeyMaterial", b =>
+            modelBuilder.Entity("RS.Identity.API.Security.Model.KeyMaterial", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()

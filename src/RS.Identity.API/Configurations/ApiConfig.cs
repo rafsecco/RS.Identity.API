@@ -1,9 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using RS.Core.Security;
-using RS.Core.Security.AspNetCore;
-using RS.Core.Security.EntityFrameworkCore;
-using RS.Core.Security.Jwa;
+using RS.Identity.API.Security.AspNetCore;
+using RS.Identity.API.Security.WebAPI.User;
 using RS.Identity.API.Data;
+using RS.Identity.API.Services;
 using System.Reflection;
 
 namespace RS.Identity.API.Configurations;
@@ -19,12 +18,10 @@ public static class ApiConfig
 			.AddEnvironmentVariables()
 			.AddUserSecrets(Assembly.GetExecutingAssembly(), true);
 
-		builder.Services
-			.AddJwksManager(options => options.Jws = Algorithm.Create(DigitalSignaturesAlgorithm.EcdsaSha256))
-			.PersistKeysToDatabaseStore<RSIdentityDbContext>()
-			.UseJwtValidation();
-
 		builder.Services.AddControllers();
+
+		builder.Services.AddScoped<AuthenticationService>();
+		builder.Services.AddScoped<IAspNetUser, AspNetUser>();
 
 		string? strConn = builder.Configuration.GetConnectionString("DefaultConnection");
 

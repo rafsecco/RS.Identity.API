@@ -28,8 +28,4 @@
 		-->
 	</ItemGroup>
 
-	<ItemGroup>
-	  <ProjectReference Include="..\RS.Core\RS.Core.csproj" />
-	</ItemGroup>
-
 </Project>
